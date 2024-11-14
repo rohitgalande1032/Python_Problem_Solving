@@ -1,0 +1,4 @@
+File are used to store data permanantely in memory.
+There are different types of modes like r-read (open file in read mode), 
+w-write (open file in write mode. If file does not exist it will create new, it override data and add new),
+a-append (append data in existing data)
