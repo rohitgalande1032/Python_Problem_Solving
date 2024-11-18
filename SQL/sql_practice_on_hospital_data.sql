@@ -140,7 +140,135 @@ FROM patients
 GROUP BY city
 ORDER BY total_no_of_patients DESC, city;
 
+-- Q-26 : . Show first name, last name and role of every person that is either patient or doctor. The
+--          roles are either "Patient" or "Doctor"
+SELECT first_name, last_name, "Patient" as role
+FROM patients
+UNION ALL --Combines the results of two queries into a single result set with duplicate values
+SELECT first_name, last_name, "Doctor" as role
+FROM doctors;
 
 
+-- Q-27 : Show all allergies ordered by popularity. Remove NULL values from query.
+select allergies, COUNT(*) as popular_allergies
+from patients
+where allergies is not NULL
+group by allergies
+order by popular_allergies DESC;
+
+-- Q-28 : Show all patient's first_name, last_name, and birth_date who were born in the 1970s
+--          decade. Sort the list starting from the earliest birth_date.
+select first_name, last_name, birth_date
+from patients 
+where birth_date like "%197%"
+order by birth_date ;
+
+------------OR-----------------
+select first_name, last_name, birth_date
+from patients
+where YEAR(birth_date) between 1970 and 1979
+order by birth_date;
+
+-- Q-29 : We want to display each patient's full name in a single column. Their last_name in all
+--        upper letters must appear first, then first_name in all lower case letters. Separate the
+--        last_name and first_name with a comma. Order the list by the first_name in decending
+--        order. EX: SMITH,jane
+select concat(upper(last_name), ",", lower(first_name)) as full_name
+from patients
+order by first_name desc;
+
+-- Q-30 : Show the province_id(s), sum of height; where the total sum of its patient's height is
+--        greater than or equal to 7,000.
+select province_id, sum(height)
+from patients
+group by province_id
+having sum(height) >= 7000;
+
+-- Q-31 : Show the difference between the largest weight and smallest weight for patients with
+--        the last name 'Maroni'
+select (MAX(weight) - MIN(weight)) as weight_diff
+from patients
+where last_name = "Maroni";
 
 
+-- Q-32 : Show all of the days of the month (1-31) and how many admission_dates occurred on
+--        that day. Sort by the day with most admissions to least admissions.
+select day(admission_date) day_num, count(patient_id) as total_admissions
+from admissions
+group by day_num
+order by total_admissions desc;
+
+-- Q-33 : Show all columns for patient_id 542's most recent admission_date.
+select * from admissions
+where patient_id = 542
+order by admission_date desc
+limit 1;
+
+-- Q-34 :  Show patient_id, attending_doctor_id, and diagnosis for admissions that match one of
+--         the two criteria: (A). patient_id is an odd number and attending_doctor_id is either 1, 5,
+--         or (B). attending_doctor_id contains a 2 and the length of patient_id is 3 characters
+select patient_id, attending_doctor_id, diagnosis
+from admissions
+where patient_id%2 <> 0 and attending_doctor_id in (1, 5)
+or attending_doctor_id like  "%2%" and len(patient_id) = 3;
+
+-- Q-35 : Show first_name, last_name, and the total number of admissions attended for each
+--          doctor. Every admission has been attended by a doctor.
+select first_name, last_name, count(admission_date) as total_admissions
+from admissions a join doctors d
+on a.attending_doctor_id = d.doctor_id
+group by doctor_id;
+
+-- Q-36 : For each doctor, display their id, full name, and the first and last admission date they attended.
+select doctor_id, 
+    concat(first_name," ",last_name) as full_name, 
+    min(admission_date) as first_date_attended, 
+    max(admission_date) as last_date_attended
+from admission as a join doctor as d
+on a.attending_doctor_id = d.doctor_id
+group by doctor_id;
+
+
+-- Q-37 : Display the total amount of patients for each province. Order by descending.
+select pr.province_name, count(p.patient_id) as total_patients
+from patients as p join province_names as pr
+on p.province_id = pr.province_id
+group by pr.province_name
+order by p.total_patients desc;
+
+-- Q-38 : For every admission, display the patient's full name, their admission diagnosis, and their
+--        doctor's full name who diagnosed their problem.
+select concat(p.first_name, " ", p.last_name) as patient_full_name, a.diagnosis,
+       concat(d.first_name, " ", d.last_name)
+from patients as p join admissions as 
+on p.patient_id = a.patient_id
+join doctors as d
+on d.doctor_id = a.attending_doctor_id;
+
+-- Q-39 : display the first name, last name and number of duplicate patients based on their first
+--        name and last name.
+select first_name, last_name, count(*) as no_of_duplicates
+from patients
+group by first_name, last_name
+having count(*) > 1;
+
+-- Q-40 : Display patient's full name, height in the units feet rounded to 1 decimal, weight in the
+--        unit pounds rounded to 0 decimals, birth_date, gender non abbreviated. Convert CM to
+--        feet by dividing by 30.48. Convert KG to pounds by multiplying by 2.205.
+select concat(first_name, " ", last_name) as patient_full_name,
+       round((height/30.48), 1) as height, 
+       round((weight*2.205), 0) as weight, 
+       birth_date,
+       case
+            when gender = "M" then "Male",
+            when gender = "F" then "Female"
+       end as gender
+from patients;
+
+-- Q-41 : Show patient_id, first_name, last_name from patients who do not have any records in
+--        the admissions table. (Their patient_id does not exist in any admissions.patient_id rows.)
+
+select p.patient_id, p.first_name, p.last_name 
+from patients as p left join admission as a
+on p.patient_id = a.patient_id
+where p.patient_id is null;
